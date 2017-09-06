@@ -32,6 +32,23 @@ Get EJBCA version
     ]
   }
 
+## Get CA certificate [/ca/<cacn>]
+### Give the PEM certificate chain of the given CA [GET]
+To save the chain in a .CRT file, add the line "-----BEGIN CERTIFICATE-----" at the begin of the file and
+"----END CERTIFICATE-----" at the end.
++ Response 400 (application/json)
+{
+    "status": 400,
+    "message": "soap message: CA with name abcde does not exist."
+}
+
++ Response 200 (application/json)
+{
+    "certificate": "*base64cert chain with linebreaks"
+}
+
+
+
 ## Check certificate status [/ca/<cacn>/certificate/<certserial>/status]
 ### Check if a certificate is revoked [GET]
 if the certificate serial number does not exist EJBCA will return 'not revoked'.

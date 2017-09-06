@@ -44,6 +44,16 @@ def getAvalibleCA():
     caList = zeep.helpers.serialize_object(ejbcaServ().getAvailableCAs())
     return make_response(json.dumps({'CAs': caList}), 200)
 
+#retrieve CA certificate chain
+@app.route('/ca/<cacn>', methods=['GET'])
+def getCAChain(cacn):
+    try:
+        cert = zeep.helpers.serialize_object( ejbcaServ().getLastCAChain(cacn))
+    except zeep.exceptions.Fault as error:
+        return formatResponse(400, 'soap message: ' + error.message)
+    
+    return make_response(json.dumps({'certificate': cert[0]['certificateData']}), 200)
+
 #receive the cert status
 @app.route('/ca/<cacn>/certificate/<certsn>/status', methods=['GET'])
 def verifyCert(cacn,certsn):
@@ -181,7 +191,7 @@ def findCerts(username):
     
     return make_response(json.dumps({'certs': certs}), 200)
 
-# json parameters: 'passwd': the user assword.
+# json parameters: 'passwd': the user password.
 #                  'certificate' base64 pkcs10 csr
 @app.route('/user/<username>/pkcs10', methods=['POST'])
 def pkcs10Request(username):
@@ -196,7 +206,7 @@ def pkcs10Request(username):
         return formatResponse(400, 'malformed JSON')
 
     try:
-        resp = zeep.helpers.serialize_object( ejbcaServ().pkcs10Request(username,info['passwd'],info['certificate'],None,'PKCS7') )
+        resp = zeep.helpers.serialize_object( ejbcaServ().pkcs10Request(username,info['passwd'],info['certificate'],None,"CERTIFICATE") )
     except zeep.exceptions.Fault as error:
         return formatResponse(400, 'soap message: ' + error.message)
     
