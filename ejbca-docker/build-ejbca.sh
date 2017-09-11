@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# Credits to Viiky - https://github.com/vkyii/docker/tree/master/ejbca
 set -x -e
 
 #
@@ -25,10 +25,9 @@ sed -i '/SecureInputHandler/d' bin/cli.xml
 $ANT_HOME/bin/ant deploy
 $ANT_HOME/bin/ant install
 
-# 处理一个错误
 rm -rf $APPSRV_HOME/standalone/configuration/standalone_xml_history/current
 
-# 保存证书
+# Save the certificate
 cp -r $EJBCA_HOME/p12 /
 # # Link generated admin credentials to / for easier access 
 # ln -s $EJBCA_HOME/p12/superadmin.p12 /
