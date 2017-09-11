@@ -1,6 +1,9 @@
 #!/usr/bin/python
 import json
 from lxml import etree
+
+import requests
+from time import sleep
 #for soap interface
 import zeep
 import zeep.helpers
@@ -212,8 +215,15 @@ def pkcs10Request(username):
     
     return make_response(json.dumps({'status': resp}), 200)
 
-
 if __name__ == '__main__':
-    initicalConf() #execute the EJBCA handshake and load SOAP API metadata 
-    app.run(host='0.0.0.0', threaded=True)
+    while True:
+        try:
+            initicalConf() #execute the EJBCA handshake and load SOAP API metadata 
+            break
+        except requests.exceptions.ConnectionError:
+            print "Cant connect to EJBCA server for initial configuration"
+            print "Chances are the server is not ready yet. Will retry in 30sec"
+            sleep(30)
+                    
+    app.run(host='0.0.0.0', port=5583, threaded=True)
     
