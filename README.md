@@ -46,17 +46,17 @@ Change the following fields:
 	* deselect key lengths bellow 2048 bits
 * Signature Algorithm
 	* Sha256WithRSA
+* Allow extension override
+	* check
 * Basic Constraints
 	* unselect critical
 * Key Usage
 	* unselect critical
 	* select 'data encipherment' and 'Key agreement'
-* Allow extension override
-	* check
 * Extended Key Usage
 	* unselect
 	
-Click 'save' at the button of the page to save editions.
+Click 'save' at the bottom of the page to save editions.
 
 Click on 'End Entity Profiles'
 Create a new profile, called 'EMPTY_CFREE'
@@ -72,4 +72,4 @@ Edit the profile
 * Available Certificate Profiles 
 	* Select CFREE
 
-Click 'save' at the button of the page to save editions
+Click 'save' at the bottom of the page to save editions
