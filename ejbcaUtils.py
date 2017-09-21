@@ -35,9 +35,9 @@ def retrieveCACert():
     except zeep.exceptions.Fault as error:
         print('Error occurred while loading CA cert chain. soap message: ' + error.message)
         exit(-1)
-    
+
     caCrt = "-----BEGIN CERTIFICATE-----\n" +  cert  + "\n-----END CERTIFICATE-----\n"
-    
+
     with open('/p12/ca.crt', "w") as crtFile:
         crtFile.write(caCrt)
 
@@ -49,10 +49,13 @@ def loadWSDLbase():
     else:
         session.verify = '/p12/ca.crt'
     session.cert = '/p12/superadmin.pem'
-    transport = Transport(session=session)   
+    transport = Transport(session=session)
     ejbcaWSDLbase = zeep.Client('https://localhost:8443/ejbca/ejbcaws/ejbcaws?wsdl', transport=transport)
-    
+
     ejbcaWSDLbase.options(raw_response=True)
+
+def populateProfileDatabase():
+    os.system("cd /build/ejbca_ce_6_3_1_1/dist/ejbca-ejb-cli && bash ./ejbca.sh ca importprofiles -d /build/profiles")
 
 def initicalConf():
     if not os.path.isfile('/p12/superadmin.pem'):
@@ -65,4 +68,5 @@ def initicalConf():
     if not os.path.isfile('/p12/ca.crt'):
         retrieveCACert()
         loadWSDLbase() #if the connection was unsafe, conect again with certificates
-    
+
+    populateProfileDatabase()

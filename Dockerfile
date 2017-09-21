@@ -19,18 +19,20 @@ RUN mv /etc/apk/repositories /etc/apk/repositories.old && \
 
 RUN mkdir -p /opt \
  && wget http://downloads.sourceforge.net/project/ejbca/ejbca6/ejbca_6_3_1_1/ejbca_ce_6_3_1_1.zip \
- && unzip ejbca_ce_6_3_1_1.zip -q 
+ && unzip ejbca_ce_6_3_1_1.zip -q
 
 RUN wget http://archive.apache.org/dist/ant/binaries/apache-ant-$ANT_VER-bin.tar.gz \
  && tar -zxf apache-ant-$ANT_VER-bin.tar.gz \
- && /bin/sh ./build-ejbca.sh \
- && rm -rf /build
+ && /bin/sh ./build-ejbca.sh
 
 COPY entrypoint.sh /root/entrypoint.sh
 RUN  mkdir -p /var/www && \
 	chmod +x /root/entrypoint.sh
 COPY *.py  /var/www/
 
+RUN cd /build/ejbca_ce_6_3_1_1/modules/ejbca-ejb-cli && \
+	 /build/apache-ant-1.9.6/bin/ant build && \
+	 cp /build/ejbca_ce_6_3_1_1/modules/ejbca-ejb-cli/ejbca.sh /build/ejbca_ce_6_3_1_1/dist/ejbca-ejb-cli/
 
 EXPOSE 5583
 CMD ["/root/entrypoint.sh"]
