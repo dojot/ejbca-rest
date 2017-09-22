@@ -1,0 +1,24 @@
+{
+    "name" : "IOTmidCA",
+     "subca" : [
+        {
+            "name": "PROTOCOL",
+            "validity" : "730",
+            "keysize" : "4096",
+            "subca" : [
+        				{
+        				      "name" : "MQTT",
+                      "validity" : "365",
+                      "keysize" : "2048",
+             				  "subca" : []
+        				},
+                {
+        				      "name" : "COAP",
+                      "validity" : "365",
+                      "keysize" : "2048",
+             				  "subca" : []
+        				}
+	           ]
+        }
+    ]
+}

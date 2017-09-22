@@ -10,7 +10,9 @@ ENV APPSRV_HOME=$JBOSS_HOME \
 WORKDIR /build
 COPY ejbca-docker/ /build
 
-RUN mv /etc/apk/repositories /etc/apk/repositories.old && \
+RUN mv  /build/profiles /root/ && \
+		mv  /build/CAs /root/ && \
+	mv /etc/apk/repositories /etc/apk/repositories.old && \
 	cat /etc/apk/repositories.old | sed -e 's/3.4/3.6/g' > /etc/apk/repositories  && \
      apk update && apk add --no-cache ca-certificates && update-ca-certificates && \
 	apk add --no-cache bash py2-pip wget openssl-dev  python-dev py-openssl && \
@@ -25,14 +27,19 @@ RUN wget http://archive.apache.org/dist/ant/binaries/apache-ant-$ANT_VER-bin.tar
  && tar -zxf apache-ant-$ANT_VER-bin.tar.gz \
  && /bin/sh ./build-ejbca.sh
 
+#build ejbca-cli
+RUN cd /build/ejbca_ce_6_3_1_1/modules/ejbca-ejb-cli && \
+ 	 /build/apache-ant-1.9.6/bin/ant build && \
+ 	 cp /build/ejbca_ce_6_3_1_1/modules/ejbca-ejb-cli/ejbca.sh /build/ejbca_ce_6_3_1_1/dist/ejbca-ejb-cli/ && \
+ 	 cd /build/ejbca_ce_6_3_1_1/dist && mv ejbca-ejb-cli /root/ && \
+ 	 rm -rf /build
+
 COPY entrypoint.sh /root/entrypoint.sh
 RUN  mkdir -p /var/www && \
 	chmod +x /root/entrypoint.sh
 COPY *.py  /var/www/
 
-RUN cd /build/ejbca_ce_6_3_1_1/modules/ejbca-ejb-cli && \
-	 /build/apache-ant-1.9.6/bin/ant build && \
-	 cp /build/ejbca_ce_6_3_1_1/modules/ejbca-ejb-cli/ejbca.sh /build/ejbca_ce_6_3_1_1/dist/ejbca-ejb-cli/
+
 
 EXPOSE 5583
 CMD ["/root/entrypoint.sh"]
