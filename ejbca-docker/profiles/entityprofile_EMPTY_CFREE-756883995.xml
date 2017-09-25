@@ -308,6 +308,15 @@
     <void method="add">
      <int>1</int>
     </void>
+    <void method="add">
+     <int>0</int>
+    </void>
+    <void method="add">
+     <int>0</int>
+    </void>
+    <void method="add">
+     <int>0</int>
+    </void>
    </object>
   </void>
   <void method="put">
@@ -447,7 +456,7 @@
   </void>
   <void method="put">
    <int>30</int>
-   <string>875080742</string>
+   <string>875080742;1</string>
   </void>
   <void method="put">
    <int>20030</int>
@@ -527,7 +536,7 @@
   </void>
   <void method="put">
    <int>38</int>
-   <string>576968287</string>
+   <string>1</string>
   </void>
   <void method="put">
    <int>20038</int>

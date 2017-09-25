@@ -77,6 +77,7 @@ def createSubCA(subCaJSON, parentCAID):
         createSubCA(sub,str(caID) )
 
 def configureCA(cafilePath):
+    populateProfileDatabase()
     if os.path.isfile(cafilePath):
         with open(cafilePath) as data_file:
             caJSON = json.load(data_file)
