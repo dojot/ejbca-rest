@@ -2,11 +2,11 @@
 
 ## Configuration
 
-If you are using the provided docker-container, all configuration explained on this documment
+If you are using the provided docker container, all configuration explained on this documment
 was automatic done on the container.
 
-This documment list the steps taken to manualy configure EJBCA  
-for historyc and the sake of transparency on the configuration done.
+This documment list the steps taken to manualy configure EJBCA
+for historic and the sake of transparency on the configuration done.
 
 Misconfigure a Certificate Authorite can be dangerous. Please, take care.
 
