@@ -17,7 +17,7 @@ RUN mv  /build/profiles /root/ && \
      apk update && apk add --no-cache ca-certificates && update-ca-certificates && \
 	apk add --no-cache bash py2-pip wget openssl-dev  python-dev py-openssl && \
 	apk add --no-cache gcc linux-headers musl-dev  py-lxml && \
- 	pip2 install requests flask  lxml zeep
+ 	pip2 install requests flask  lxml zeep kafka
 
 RUN mkdir -p /opt \
  && wget http://downloads.sourceforge.net/project/ejbca/ejbca6/ejbca_6_3_1_1/ejbca_ce_6_3_1_1.zip \
@@ -37,9 +37,7 @@ RUN cd /build/ejbca_ce_6_3_1_1/modules/ejbca-ejb-cli && \
 COPY entrypoint.sh /root/entrypoint.sh
 RUN  mkdir -p /var/www && \
 	chmod +x /root/entrypoint.sh
-COPY *.py  /var/www/
-
-
+ADD . /var/www/
 
 EXPOSE 5583
 CMD ["/root/entrypoint.sh"]
