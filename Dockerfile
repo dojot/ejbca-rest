@@ -34,9 +34,12 @@ RUN cd /build/ejbca_ce_6_3_1_1/modules/ejbca-ejb-cli && \
  	 cd /build/ejbca_ce_6_3_1_1/dist && mv ejbca-ejb-cli /root/ && \
  	 rm -rf /build
 
+COPY ejbca-docker/scripts/createcrl.sh /etc/periodic/daily/createcrl.sh
 COPY entrypoint.sh /root/entrypoint.sh
 RUN  mkdir -p /var/www && \
-	chmod +x /root/entrypoint.sh
+	chmod +x /root/entrypoint.sh && \
+	chmod +x /etc/periodic/daily/createcrl.sh
+
 ADD . /var/www/
 
 EXPOSE 5583
