@@ -10,13 +10,37 @@ from ejbcaUtils import ejbcaServ, initicalConf
 def createOrEditUser(userInfoJson):
     fillable = ['caName', 'username', 'certificateProfileName', 'clearPwd',
                 'endEntityProfileName', 'keyRecoverable', 'password',
-                'tokenType', 'subjectDN']
-    userData = {k: userInfoJson[k] for k in userInfoJson if k in fillable}
+                'tokenType', 'subjectDN', 'sendNotification', 'status'
+                ]
+    required = ['username']
 
-    userData['sendNotification'] = False
-    userData['status'] = 10  # user created. Pending certification
-    userData['keyRecoverable'] = False
-    userData['clearPwd'] = True
+    # drop not 'filable' keys
+    userData = {k: userInfoJson[k] for k in userInfoJson if k in fillable}
+    for r in required:
+        if r not in userData.keys():
+            raise RequestError(400, 'required field ' + r + 'missing.')
+
+    # default values for not required fields
+    if 'sendNotification' not in userData.keys():
+        userData['sendNotification'] = False
+    if 'status' not in userData.keys():
+        userData['status'] = 10  # user created. Pending certification
+    if 'keyRecoverable' not in userData.keys():
+        userData['keyRecoverable'] = False
+    if 'clearPwd' not in userData.keys():
+        userData['clearPwd'] = True
+    if 'certificateProfileName' not in userData.keys():
+        userData['certificateProfileName'] = 'CFREE'
+    if 'endEntityProfileName' not in userData.keys():
+        userData['endEntityProfileName'] = 'EMPTY_CFREE'
+    if 'password' not in userData.keys():
+        userData['password'] = 'dojot'
+    if 'tokenType' not in userData.keys():
+        userData['tokenType'] = 'USERGENERATED'
+    if 'subjectDN' not in userData.keys():
+        userData['subjectDN'] = 'CN=' + userData['username']
+    if 'caName' not in userData.keys():
+        userData['caName'] = 'IOTmidCA'
     try:
         ejbcaServ().editUser(userData)
     except (zeep.exceptions.Fault, zeep.exceptions.ValidationError) as error:

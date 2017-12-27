@@ -1,6 +1,6 @@
 # alternatively to the REST API
 # one can use Kafka messages to configure ejbca-rest
-# This file is the EJBCA kafka entry point
+# this file is the EJBCA kafka entry point
 # the purpose of functions here is to verify input and pass
 # the requests to the controller class
 import logging
@@ -32,10 +32,12 @@ class KafkaConsumer(Thread):
             while True:
                 try:
                     consumer = (kafka.
-                                KafkaConsumer('notifyDeviceChange',
-                                              group_id='ejbca',
-                                              bootstrap_servers=[conf.kafkaHost]
-                                              ))
+                                KafkaConsumer(
+                                    'dojot.device-manager.device',
+                                    group_id='ejbca',
+                                    bootstrap_servers=[conf.kafkaHost]
+                                           )
+                                )
                     break
                 except kafka.errors.NoBrokersAvailable:
                     LOGGER.error('Could not connect to Kafka at %s.'
@@ -51,46 +53,56 @@ class KafkaConsumer(Thread):
                                  + dumpKafkaMessage(message))
                     continue
 
-                if 'action' not in requestData.keys():
-                    LOGGER.error('Action not specified. '
+                if 'event' not in requestData.keys():
+                    LOGGER.error('Event not specified. '
                                  + dumpKafkaMessage(message))
                     continue
 
-                if requestData['action'] in ['create', 'update']:
+                if requestData['event'] in ['create', 'update']:
                     try:
-                        if 'device' not in requestData.keys():
-                            LOGGER.error("Device name not especified. "
+                        if 'data' not in requestData.keys():
+                            LOGGER.error("data segment not found. "
                                          + dumpKafkaMessage(message))
                             continue
-                        requestData['username'] = requestData['device']
+                        if 'id' not in requestData['data'].keys():
+                            LOGGER.error("device id not specified. "
+                                         + dumpKafkaMessage(message))
+                            continue
+                        requestData['username'] = requestData['data']['id']
                         uc.createOrEditUser(requestData)
-                        LOGGER.info('user %s created' % requestData['device'])
+                        LOGGER.info('user %s created'
+                                    % requestData['username'])
                     except RequestError as err:
                         LOGGER.error(err.message + " "
                                      + dumpKafkaMessage(message))
 
-                elif requestData['action'] == 'delete':
+                elif requestData['event'] == 'delete':
                     try:
-                        if 'device' not in requestData.keys():
-                            LOGGER.error("Device name not especified. "
+                        if 'data' not in requestData.keys():
+                            LOGGER.error("data segment not found. "
                                          + dumpKafkaMessage(message))
                             continue
-                        uc.deleteUser(requestData['device'])
+                        if 'id' not in requestData['data'].keys():
+                            LOGGER.error("device id not specified. "
+                                         + dumpKafkaMessage(message))
+                            continue
+                        uc.deleteUser(requestData['data']['id'])
                         LOGGER.info("Device %s revocated"
-                                    % requestData['device'])
+                                    % requestData['data']['id'])
                     except RequestError as err:
                         LOGGER.error(err.message + " "
                                      + dumpKafkaMessage(message))
 
                 else:
-                    LOGGER.error("'Action' " + requestData['action']
+                    LOGGER.error("'event' " + requestData['event']
                                  + " not implemented"
                                  + dumpKafkaMessage(message))
 
-    # helper function to log messages (for debug purposes)
-    def dumpKafkaMessage(msg):
-        return ('%s:%d:%d: key=%s value=%s'
-                % (msg.topic, msg.partition,
-                   msg.offset, msg.key,
-                   msg.value)
-                )
+
+# helper function to log messages (for debug purposes)
+def dumpKafkaMessage(msg):
+    return ('%s:%d:%d: key=%s value=%s'
+            % (msg.topic, msg.partition,
+               msg.offset, msg.key,
+               msg.value)
+            )
