@@ -9,7 +9,6 @@ import json
 from time import sleep
 import requests
 from threading import Thread
-import base64
 
 import conf
 from controller.RequestError import RequestError
@@ -20,38 +19,10 @@ LOGGER = logging.getLogger('ejbca.' + __name__)
 LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(logging.DEBUG)
 
-topic_map = {}
-
-def get_topic(service, subject):
-    if service in topic_map.keys():
-        if subject in topic_map[service].keys():
-            return topic_map[service][subject]
-
-    target = "{}/topic/{}".format(conf.data_broker, subject)
-    userinfo = {
-        "username": "ejbca",
-        "service": service
-    }
-
-    jwt = "{}.{}.{}".format(base64.b64encode("model".encode()).decode(),
-                            base64.b64encode(json.dumps(userinfo).encode()).decode(),
-                            base64.b64encode("signature".encode()).decode())
-
-    response = requests.get(target, headers={"authorization": jwt})
-    if 200 <= response.status_code < 300:
-        payload = response.json()
-        if topic_map.get(service, None) is None:
-            topic_map[service] = {}
-        topic_map[service][subject] = payload['topic']
-        return payload['topic']
-    return None
-
 
 class KafkaConsumer(Thread):
     def __init__(self):
         Thread.__init__(self)
-
-
 
     def run(self):
         while True:
@@ -62,7 +33,7 @@ class KafkaConsumer(Thread):
                 try:
                     consumer = (kafka.
                                 KafkaConsumer(
-                                    get_topic(conf.service, conf.subject),
+                                    'dojot.device-manager.device',
                                     group_id='ejbca',
                                     bootstrap_servers=[conf.kafkaHost]
                                            )
