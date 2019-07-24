@@ -43,9 +43,7 @@ def formatResponse(status, message=None):
     return make_response(payload, status)
 
 def receiver_kafka(tenant, message):
-
     message = json.loads(message)
-
     try:
         event = message.get("event")
         if event == "create" or event == "update":
@@ -197,7 +195,7 @@ def deleteUser(username):
         elif 'delete' in request.args:
             deleteAfter = request.args['delete'] in ['True', 'true']
     try:
-        uc.deleteUser(username, reasonCode, deleteAfter)
+        uc.deleteUser(username, reason, deleteAfter)
     except RequestError as err:
         return formatResponse(err.errorCode, err.message)
     return formatResponse(200)
@@ -267,7 +265,7 @@ if __name__ == '__main__':
             # execute the EJBCA handshake and load SOAP API metadata
             initicalConf()
             break
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.RequestException:
             print("Cant connect to EJBCA server for initial configuration")
             print("Chances are the server is not ready yet.")
             print("Will retry in 30sec")
