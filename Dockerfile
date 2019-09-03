@@ -7,19 +7,27 @@ ENV APPSRV_HOME=$JBOSS_HOME \
 
 WORKDIR /build
 COPY ejbca-docker/ /build
+COPY requirements/ /requirements
 
 RUN mv  /build/profiles /root/ && \
 	mv  /build/CAs /root/ && \
 	mv /etc/apk/repositories /etc/apk/repositories.old && \
-	cat /etc/apk/repositories.old | sed -e 's/3.4/3.6/g' > /etc/apk/repositories  && \
-    apk update && apk add --no-cache ca-certificates && update-ca-certificates && \
-	apk add --no-cache bash py3-pip wget openssl-dev  python3 py-openssl && \
-	apk add --no-cache gcc linux-headers musl-dev  py-lxml && \
-	python3 -m ensurepip && \
- 	pip3 install requests flask  lxml zeep kafka dojot.module && \
-	apk add --no-cache python3-dev && \
-	pip3 uninstall -y pyopenssl && \
-	pip3 install pyopenssl
+	cat /etc/apk/repositories.old | sed -e 's/3.4/3.6/g' > /etc/apk/repositories 
+
+RUN apk update && apk add --no-cache ca-certificates && update-ca-certificates 
+
+RUN apk add --no-cache bash py3-pip wget openssl-dev python3 py-openssl libffi-dev
+
+RUN apk add --no-cache gcc linux-headers musl-dev  py-lxml 
+
+RUN python3 -m ensurepip 
+
+RUN apk add --no-cache python3-dev 
+
+RUN pip3 uninstall -y pyopenssl 
+
+RUN pip3 install -r /requirements/requirements.txt
+
 
 RUN wget http://downloads.sourceforge.net/project/ejbca/ejbca6/ejbca_6_3_1_1/ejbca_ce_6_3_1_1.zip \
     && unzip ejbca_ce_6_3_1_1.zip -q
