@@ -8,17 +8,46 @@ import zeep
 import requests
 import json
 from zeep.transports import Transport
+from dojot.module import Log
+from zeep.plugins import HistoryPlugin
 import zeep.helpers
+from lxml import etree as ET
 
 
 # the WSDL service class
 global ejbcaWSDLbase
-
+global history
+LOGGER = Log().color_log()
 
 # just an alias
 def ejbcaServ():
     return ejbcaWSDLbase.service
 
+# Those zeep debug functions will have effect only
+# after using a service (e.g. after using getAvailableCAs wsdl service)
+
+
+def returnHistory():
+    if history.last_sent['envelope'] is not None:
+        LOGGER.info(ET.tounicode(
+            history.last_sent['envelope'], pretty_print=True))
+
+    if history.last_received['envelope'] is not None:
+        LOGGER.info(ET.tounicode(
+            history.last_received['envelope'], pretty_print=True))
+
+
+def createXMLfromWSDL(service):
+    node = ejbcaWSDLbase.create_message(ejbcaWSDLbase.service, service)
+    tree = ET.ElementTree(node)
+    tree.write('wsdl.xml', pretty_print=True)
+    print("XML Created.")
+
+def renewCACRL(caname):
+    cmd = "cd /root/ejbca-ejb-cli && bash ejbca.sh ca createcrl --caname " + \
+        caname
+
+    os.system(cmd)
 
 def pfx_to_pem(pfx_path, pfx_password):
     # based on
@@ -53,6 +82,7 @@ def retrieveCACert():
 
 def loadWSDLbase():
     global ejbcaWSDLbase
+    global history
     session = requests.Session()
     if not os.path.isfile('/p12/ca.crt'):
         session.verify = False
@@ -60,7 +90,9 @@ def loadWSDLbase():
         session.verify = '/p12/ca.crt'
     session.cert = '/p12/superadmin.pem'
     transport = Transport(session=session)
-    ejbcaWSDLbase = zeep.Client('https://localhost:8443/ejbca/ejbcaws/ejbcaws?wsdl', transport=transport)
+    history = HistoryPlugin()
+    ejbcaWSDLbase = zeep.Client('https://localhost:8443/ejbca/ejbcaws/ejbcaws?wsdl',
+                                transport=transport, plugins=[history])
 
     ejbcaWSDLbase.settings(raw_response=True)
 
@@ -96,7 +128,7 @@ def configureCA(cafilePath):
     if os.path.isfile(cafilePath):
         with open(cafilePath) as data_file:
             caJSON = json.load(data_file)
-
+    
         for caZepp in zeep.helpers.serialize_object(ejbcaServ().getAvailableCAs()):
             if caZepp['name'] == caJSON['name']:
                 caID = caZepp['id']

@@ -18,7 +18,10 @@ import enumList
 
 from controller.RequestError import RequestError
 import controller.UserController as uc
-from ejbcaUtils import ejbcaServ, initicalConf
+
+from ejbcaUtils import ejbcaServ, initicalConf, createXMLfromWSDL, \
+    returnHistory, renewCACRL
+
 from dojot.module import Messenger, Config
 app = Flask(__name__)
 # CORS(app)
@@ -46,11 +49,11 @@ def receiver_kafka(tenant, message):
     message = json.loads(message)
     try:
         event = message.get("event")
+        device_id = message['meta']['service']+':'+message['data']['id']
         if event == "create" or event == "update":
-            message['username'] = message['data']['id']
+            message['username'] = device_id
             uc.createOrEditUser(message)
         elif event == "remove":
-            device_id = message['data']['id']
             uc.deleteUser(device_id)
     except Exception as e:
         print(e)
@@ -74,7 +77,7 @@ def getCAChain(cacn):
         cert = zeep.helpers.serialize_object(ejbcaServ().getLastCAChain(cacn))
     except zeep.exceptions.Fault as error:
         return formatResponse(400, 'soap message: ' + error.message)
-
+    
     return make_response(json.dumps({'certificate': cert[0]['certificateData'].decode('ascii')}), 200)
 
 
@@ -138,6 +141,12 @@ def getLatestCRL(caname):
     if len(request.args) > 0:
         if 'delta' in request.args:
             delta = request.args['delta'] in ['True', 'true']
+
+        if 'update' in request.args:
+            if request.args['update'] in ['True', 'true']:
+                # refresh the crl data
+                renewCACRL(caname)
+
     try:
         resp = ejbcaServ().getLatestCRL(caname, delta)
     except zeep.exceptions.Fault as error:
@@ -163,6 +172,29 @@ def createOrEditUser():
         return formatResponse(err.errorCode, err.message)
     return formatResponse(200)
 
+def findUserandReset(username):
+    query = {
+                "matchtype": 0,
+                "matchvalue": username,
+                "matchwith": 0
+            }
+
+    try:
+        user = zeep.helpers.serialize_object(ejbcaServ().findUser(query))
+    except zeep.exceptions.Fault as error:
+        print(str(error))
+        return False
+    if len(user) == 0:
+        print("No certificate found")
+        return False
+    
+    form_user = json.loads(json.dumps(user))
+
+    if form_user[0]['status'] != 10:    
+        form_user[0] ['status'] = 10 # NEW = 10
+        ejbcaServ().editUser(form_user)
+
+    return True
 
 @app.route('/user/<username>', methods=['GET'])
 def findUser(username):
@@ -177,7 +209,7 @@ def findUser(username):
         print(user)
     except zeep.exceptions.Fault as error:
         return formatResponse(400, 'soap message: ' + error.message)
-    if len(user) == 0:
+    if user:
         return formatResponse(404, 'no certificates found')
     return make_response(json.dumps({'user': user}), 200)
 
@@ -224,7 +256,7 @@ def findCerts(username):
 def pkcs10Request(cname):
     if request.mimetype != 'application/json':
         return formatResponse(400, 'invalid mimetype')
-
+    
     try:
         info = json.loads(request.data)
         keys = info.keys()
@@ -234,6 +266,13 @@ def pkcs10Request(cname):
                                   ' Expected: passwd and certificate')
     except ValueError:
         return formatResponse(400, 'malformed JSON')
+
+    #First we need to set the user status to new 
+    #(the cert can only be obtained if the user have NEW status)
+    # reference: https://araschnia.unam.mx/doc/ws/index.html
+
+    if findUserandReset(cname) is False:
+        return formatResponse(400, 'User not found to renew..')
 
     try:
         resp = (
