@@ -25,4 +25,5 @@ pip install zeep
 
 EJBCA-REST is configurated out of the box with Certification Profiles compatible with Mosquitto TLS and other IoT Brokers.
 
-If you need to configure EJBCA manualy, check our [Profile Configuration Manual](./docs/ProfileConfiguration.md).
+If you need to configure EJBCA manualy, check our [Profile Configuration Manual](./docs/profile-configuration.rst).
+
